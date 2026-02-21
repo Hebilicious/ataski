@@ -1,6 +1,7 @@
-# taskai
+# ataski
 
-`taskai` is an agent skill for managing project work with the Ataski file-based task system.
+`ataski` is an agent skill for managing project work with the Ataski file-based task system.
+GitHub repository: `Hebilicious/ataski`.
 
 ## What Ataski Is
 
@@ -17,64 +18,57 @@ ataski/
 Each change gets a new markdown task file with frontmatter.
 Task IDs must increment and start with a letter plus number (for example: `T001`, `T002`).
 `ataski/tasks.md` is the canonical bullet list index for all tasks.
-
-## Install The Skill
-
-Recommended: install per project in `.agents/skills` (not globally), so each repo keeps its own skill version.
-
-1. From your project root, create `.agents/skills`.
-2. Copy or symlink this repo as `taskai` inside `.agents/skills`.
+Task dependencies are declared in frontmatter using `blockedBy`.
 
 Example:
 
+```yaml
+---
+id: T010
+title: "Integrate OAuth callback validation"
+status: todo
+blockedBy: [T008]
+created_at: 2026-02-21T00:00:00Z
+updated_at: 2026-02-21T00:00:00Z
+---
+```
+
+`blockedBy` is a hard gate: if blockers are not `done`, the task stays in `todo`.
+Avoid circular dependencies in `blockedBy`.
+
+## Worktrees + Sub-Agents (Recommended)
+
+Use a single canonical task board in the main worktree, then execute each task in an isolated worktree.
+
+1. In main worktree, create tasks in `ataski/todo/` and set dependencies with `blockedBy`.
+2. Select only unblocked tasks (all `blockedBy` IDs must be `done`).
+3. Claim task by moving it to `ataski/in-progress/` before coding.
+4. Spawn one worktree branch per task (for example `task/T014-add-oauth-callback-validation`).
+5. Assign one sub-agent to that worktree and task.
+6. Merge one PR per task branch.
+7. In main worktree, move merged task to `ataski/done/`, update `tasks.md`, then re-check newly unblocked tasks.
+
+## Install The Skill
+
+Install with `skills.sh`:
+
 ```bash
-mkdir -p .agents/skills
-ln -s /absolute/path/to/this/repo .agents/skills/taskai
+npx skills add /absolute/path/to/this/repo/skills -a amp
 ```
 
-Alternative (copy instead of symlink):
+This installs to the project-local `.agents/skills/ataski/` path.
 
-```bash
-mkdir -p .agents/skills
-cp -R /absolute/path/to/this/repo .agents/skills/taskai
-```
+## Update `AGENT.md` / `AGENTS.md` To Enable Ataski
 
-After install, the skill file should exist at:
+Update your agent instruction file using the reference provided by this skill:
 
-```text
-.agents/skills/taskai/SKILL.md
-```
-
-### Install With skills.sh
-
-You can install this local skill with the `skills.sh` CLI:
-
-```bash
-npx skills add /absolute/path/to/this/repo -a amp
-```
-
-This installs to the project-local `.agents/skills/` path (`amp` project layout).
-
-Use global installs only if you explicitly want cross-project sharing:
-
-```bash
-npx skills add /absolute/path/to/this/repo -a amp -g
-```
-
-## Update `AGENTS.md` To Enable Ataski
-
-Add an entry under your `## Skills` section (or equivalent skill list):
-
-```md
-- taskai: Manage tasks with the Ataski filesystem (`ataski/todo`, `ataski/in-progress`, `ataski/done`) using incrementing IDs like `T001` and maintaining `ataski/tasks.md`. Use when creating/updating/moving project task files for agent coordination. (file: /absolute/path/to/project/.agents/skills/taskai/SKILL.md)
-```
-
-Use your real absolute path for `file:`.
+- `skills/references/AGENTS.md`
 
 ## Minimal Verification
 
-1. Confirm `AGENTS.md` includes the `taskai` entry.
-2. Confirm the `file:` path points to this repo's `SKILL.md`.
-3. Ask an agent to create a new task and verify it creates:
+1. Confirm your agent instruction file is updated from `skills/references/AGENTS.md`.
+2. Confirm the `file:` path points to `.agents/skills/ataski/SKILL.md`.
+3. Ask an agent to create one temporary task and verify it creates:
    - `ataski/todo/T00X-*.md`
    - a matching bullet in `ataski/tasks.md`
+4. Delete the temporary task file immediately after verification and remove its matching line from `ataski/tasks.md`.

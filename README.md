@@ -53,10 +53,10 @@ Use a single canonical task board in the main worktree, then execute each task i
 Install with `skills.sh`:
 
 ```bash
-npx skills add /absolute/path/to/this/repo/skills -a amp
+npx skills add Hebilicious/ataski
 ```
 
-This installs to the project-local `.agents/skills/ataski/` path.
+This installs `ataski` to the project-local `.agents/skills/ataski/` path.
 
 ## Update `AGENT.md` / `AGENTS.md` To Enable Ataski
 

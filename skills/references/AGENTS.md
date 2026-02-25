@@ -15,7 +15,7 @@ For chore/tooling/config/docs-only changes, this workflow is optional unless exp
 2. Treat Ataski as the only task-tracking source of truth for the repository.
 3. When using git worktrees, keep one canonical `ataski/` board in the main worktree; do not maintain per-worktree task boards.
 4. Enforce task dependencies with `blockedBy` as a hard gate: do not claim/start a task until all `blockedBy` task IDs are `done`.
-5. Use one task per sub-agent worktree branch and one PR per task.
+5. For each task, use a dedicated worktree, branch, and PR. Leverage multiple agents and sub-agents when possible.
 6. Do not use or create parallel trackers (for example: `TASKLIST.md`, ad-hoc TODO files, or duplicate status boards) unless explicitly requested by the user.
 7. Follow the concrete task format, ID allocation, lifecycle, and tracker rules from the `ataski` skill definition.
 8. If `ataski/config.md` exists, it overrides defaults and must be followed.

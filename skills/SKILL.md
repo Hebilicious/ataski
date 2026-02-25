@@ -146,16 +146,6 @@ Use directory location and `status` together:
 
 Always update `updated_at` when status or task content changes.
 
-## Worktree + Sub-Agent Workflow
-
-1. In the main worktree, create tasks and define dependencies with `blockedBy`.
-2. Select only tasks that are not blocked.
-3. Claim the task on the canonical board (`todo -> in-progress`) before coding.
-4. Create one branch/worktree per task (example branch: `task/T001-short-title`).
-5. Assign exactly one sub-agent per claimed task/worktree.
-6. Sub-agent implements only that task and opens one PR for that branch.
-7. After merge, update canonical board in main worktree (`in-progress -> done`), then re-check blocked tasks.
-
 ## Test Strategy
 
 By default, each source-code task follows Red/Green TDD:
@@ -170,11 +160,34 @@ Do not mark task `done` without passing tests for source-level work.
 
 ## Multi-Agent Coordination
 
-Before starting work:
+Core rules:
 
-1. Read canonical board from main worktree.
-2. Pick one unblocked `todo` task.
-3. Move exactly one task to `in-progress`.
-4. Set `owner` if used in config.
+1. Use the main worktree as the only writable source of truth for `ataski/`.
+2. Keep one task per worktree branch (example: `task/T001-short-title`).
+3. Keep one PR per task branch.
 
-Avoid editing unrelated task files unless explicitly requested.
+Follow this sequence for each task:
+
+1. In main worktree, pick one `todo` task with all `blockedBy` tasks in `done`.
+2. Claim the task on the canonical board before coding:
+   - move file to `ataski/in-progress/`
+   - set `status: in-progress`
+   - set `owner` when used
+   - update `updated_at`
+   - update matching line in `ataski/tasks.md`
+3. Create branch/worktree for only that task (`task/<ID>-<slug>`).
+4. Assign exactly one agent or sub-agent to that worktree/task.
+5. The assigned agent or sub-agent implements only the claimed task scope and opens one PR.
+6. After merge, in main worktree:
+   - move file to `ataski/done/`
+   - set `status: done`
+   - update `updated_at`
+   - update `ataski/tasks.md`
+7. Re-evaluate blocked tasks and claim newly unblocked work.
+
+Coordination constraints:
+
+- Do not claim blocked tasks.
+- Do not claim more than one task per agent or sub-agent at a time.
+- Do not edit unrelated task files unless explicitly requested.
+- If two agents race for the same task, the first canonical board update wins; other agents must re-pick from `todo`.

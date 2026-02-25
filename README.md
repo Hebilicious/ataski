@@ -1,7 +1,6 @@
 # ataski
 
-`ataski` is an agent skill for managing project work with the Ataski file-based task system.
-GitHub repository: `Hebilicious/ataski`.
+`ataski` is an agent skill for managing project work with a file-based task system.
 
 ## What Ataski Is
 
@@ -33,20 +32,10 @@ updated_at: 2026-02-21T00:00:00Z
 ---
 ```
 
-`blockedBy` is a hard gate: if blockers are not `done`, the task stays in `todo`.
-Avoid circular dependencies in `blockedBy`.
+The `ataski` skill is opinionated:
 
-## Worktrees + Sub-Agents (Recommended)
-
-Use a single canonical task board in the main worktree, then execute each task in an isolated worktree.
-
-1. In main worktree, create tasks in `ataski/todo/` and set dependencies with `blockedBy`.
-2. Select only unblocked tasks (all `blockedBy` IDs must be `done`).
-3. Claim task by moving it to `ataski/in-progress/` before coding.
-4. Spawn one worktree branch per task (for example `task/T014-add-oauth-callback-validation`).
-5. Assign one sub-agent to that worktree and task.
-6. Merge one PR per task branch.
-7. In main worktree, move merged task to `ataski/done/`, update `tasks.md`, then re-check newly unblocked tasks.
+- Use Red/Green TDD: start with a failing test, then implement until it passes.
+- Use worktrees and multiple agents/sub-agents by default. For large task sets, specify the number of sub-agents in the prompt to control parallelism.
 
 ## Install The Skill
 
@@ -58,9 +47,9 @@ npx skills add Hebilicious/ataski
 
 This installs `ataski` to the project-local `.agents/skills/ataski/` path.
 
-## Update `AGENT.md` / `AGENTS.md` To Enable Ataski
+## Update `AGENTS.md` To Enable Ataski
 
-Update your agent instruction file using the reference provided by this skill:
+Update your agent instruction file using the reference provided by the `ataski` skill:
 
 - `skills/references/AGENTS.md`
 
@@ -72,3 +61,18 @@ Update your agent instruction file using the reference provided by this skill:
    - `ataski/todo/T00X-*.md`
    - a matching bullet in `ataski/tasks.md`
 4. Delete the temporary task file immediately after verification and remove its matching line from `ataski/tasks.md`.
+
+## Customization
+
+`ataski` is intentionally simple and meant to be customized.
+Modify the skill definition in `.agents/skills/ataski/SKILL.md` and the added instructions in your `AGENTS.md` file to suit your needs.
+
+## Claude Code
+
+For Claude Code, ensure `.claude/skills/ataski` points to the installed `ataski` skill directory.
+
+And add the following to your `CLAUDE.md` file:
+
+```md
+@AGENTS.md
+```

@@ -10,7 +10,7 @@ Use this skill to coordinate work through files in an `ataski/` directory.
 ## Canonical Board Rule
 
 When using git worktrees, keep one canonical `ataski/` board in the main worktree.
-Do not create independent task boards per worktree.
+Do not create independent copies of the `ataski/` board per worktree.
 Sub-agents claim tasks from the canonical board, then implement in isolated worktrees.
 
 ## Default `config.md`
@@ -162,7 +162,7 @@ Do not mark task `done` without passing tests for source-level work.
 
 Core rules:
 
-1. Use the main worktree as the only writable source of truth for `ataski/`.
+1. Use the main worktree as the canonical location for shared `ataski/` updates.
 2. Keep one task per worktree branch (example: `task/T001-short-title`).
 3. Keep one PR per task branch.
 

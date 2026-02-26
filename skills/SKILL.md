@@ -146,6 +146,46 @@ Use directory location and `status` together:
 
 Always update `updated_at` when status or task content changes.
 
+## Source-Code Scope and Hard Gates
+
+The rules in this section apply to **source-code changes** and are hard-gated.
+
+Source-code changes include changes that affect runtime behavior, business logic, test behavior, or execution paths, including examples such as:
+
+- route rewiring
+- deleting runtime code paths
+- service rewrites
+- data-path migrations
+- changing tests that validate behavior
+
+Chore-only changes are not source-code changes unless they alter behavior, including examples such as:
+
+- `README` edits
+- `.gitignore` edits
+- lockfile updates (unless they intentionally change runtime behavior)
+- formatting-only or comment-only edits
+
+For source-code changes, the agent MUST follow this ordered workflow and MUST NOT skip or reorder the gates:
+
+1. Create task in `ataski/todo/` (`status: todo`).
+2. Move task to `ataski/in-progress/` (`status: in-progress`).
+3. Record RED evidence in the task file, or (if TDD is not applicable) document a `TDD Exception` before source edits.
+4. Implement code changes.
+5. Record GREEN evidence in the task file.
+6. Move task to `ataski/done/` (`status: done`).
+7. Update `ataski/tasks.md` to reflect the final completed state and path.
+
+Apply the normal tracker/frontmatter updates when status changes (create/claim/complete). Step 7 is the required final tracker sync/check.
+
+Pre-edit coordination rule (source-code changes):
+
+- Before editing any source file, the task MUST already exist and MUST already be in `ataski/in-progress/`.
+
+No retroactive tracking (source-code changes):
+
+- Agents MUST NOT create, claim, or move a task to `done` after the source edits are already complete.
+- Agents MUST NOT treat Ataski updates as retroactive paperwork for already-finished source-code work.
+
 ## Test Strategy
 
 By default, each source-code task follows Red/Green TDD:
@@ -156,7 +196,33 @@ By default, each source-code task follows Red/Green TDD:
 4. Record GREEN evidence in the task file (command + pass summary).
 5. REFACTOR optional: improve code without behavior changes.
 
-Do not mark task `done` without passing tests for source-level work.
+TDD gate requirements for source-code changes:
+
+- RED evidence MUST be recorded before implementation edits.
+- If TDD is not applicable, add a `TDD Exception` section in the task file **before source edits**. This section MUST explain why TDD is not applicable and what validation will be used instead.
+- A `TDD Exception` replaces the RED requirement only. It does not waive GREEN validation.
+- GREEN evidence is always required before moving the task to `done`.
+
+Do not mark task `done` without passing tests (or the documented exception validation) for source-level work.
+
+## Completion Compliance Checklist
+
+Before completing a source-code task, verify all items below:
+
+- task was created before source edits
+- task was moved to `in-progress` before source edits
+- RED and GREEN evidence were recorded, or a pre-edit `TDD Exception` plus GREEN evidence was recorded
+- task was moved to `done` only after implementation and validation were complete
+
+## AGENTS.md Interaction
+
+Keep and use the `AGENTS.md` guidance (see `skills/references/AGENTS.md`) to mandate Ataski at the project level.
+
+For source-code changes:
+
+- `AGENTS.md` provides the project mandate/policy to use Ataski.
+- The `ataski` skill provides the exact operational procedure, lifecycle ordering, and hard gates.
+- If `AGENTS.md` says to use Ataski, then the Ataski lifecycle and TDD/compliance gates in this skill are mandatory.
 
 ## Multi-Agent Coordination
 
@@ -191,3 +257,7 @@ Coordination constraints:
 - Do not claim more than one task per agent or sub-agent at a time.
 - Do not edit unrelated task files unless explicitly requested.
 - If two agents race for the same task, the first canonical board update wins; other agents must re-pick from `todo`.
+
+Git/worktree policy prerequisite:
+
+- If project policy (for example `AGENTS.md`) requires git and/or worktrees for task execution and they are unavailable, the agent MUST stop before source edits and ask the user to initialize git or enable the required worktree workflow.

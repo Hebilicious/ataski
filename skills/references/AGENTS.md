@@ -17,6 +17,7 @@ For chore/tooling/config/docs-only changes, this workflow is optional unless exp
 4. Enforce task dependencies with `blockedBy` as a hard gate: do not claim/start a task until all `blockedBy` task IDs are `done`.
 5. For each task, use a dedicated worktree, branch, and PR. Leverage multiple agents and sub-agents when possible.
 6. Keep Ataski updated whenever shared task coordination state changes.
-7. Follow the concrete task format, ID allocation, lifecycle, and tracker rules from the `ataski` skill definition.
+7. Follow the concrete task format, ID allocation, lifecycle, tracker rules, and source-code workflow gates from the `ataski` skill definition.
 8. If `ataski/config.md` exists, it overrides defaults and must be followed.
+9. For source-code changes, this `AGENTS.md` section is the mandate to use Ataski, and the `ataski` skill is the authoritative operational procedure (task lifecycle ordering, TDD gates, and completion checks).
 ```

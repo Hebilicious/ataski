@@ -9,13 +9,16 @@ Use this skill to coordinate work through files in an `ataski/` directory.
 
 ## Canonical Board Rule
 
-When using git worktrees, keep one canonical `ataski/` board in the main worktree.
-Do not create independent copies of the `ataski/` board per worktree.
-Sub-agents claim tasks from the canonical board, then implement in isolated worktrees.
+When using git worktrees, keep one canonical worktree in the configured worktree directory (`worktreesDir`, default: `ataski/worktrees/`).
+The canonical worktree MUST use a dedicated canonical branch (example: `ataski/canonical`).
+Keep the shared `ataski/` board only in that canonical worktree.
+Do not create independent copies of the `ataski/` board in task worktrees.
+Prepare or update the board in the canonical worktree first, then create isolated task worktrees for parallel execution.
+The configured worktree directory MUST be git-ignored.
 
-## Default `config.md`
+## Default `config.jsonc`
 
-If `ataski/config.md` exists, it overrides defaults.
+If `ataski/config.jsonc` exists, it overrides defaults.
 Default configuration:
 
 ```json
@@ -40,9 +43,12 @@ Default configuration:
     "updated_at": "The task update datetime"
   },
   "testStrategy": "Red/Green TDD",
-  "tracker": "tasks.md"
+  "tracker": "tasks.md",
+  "worktreesDir": "ataski/worktrees/"
 }
 ```
+
+The same default file contents are mirrored in `skills/references/config.jsonc`.
 
 ## Structure
 
@@ -53,11 +59,24 @@ ataski/
   todo/
   in-progress/
   done/
-  config.md
+  worktrees/
+  config.jsonc
   tasks.md
 ```
 
 If it does not exist, create it before writing tasks.
+
+The default `ataski/worktrees/` directory is reserved for git worktrees and MUST be git-ignored.
+
+## Worktree Configuration
+
+Use `worktreesDir` to control where git worktrees are created.
+
+- Default: `ataski/worktrees/`
+- The canonical worktree lives inside `worktreesDir`.
+- Each parallel task gets its own separate worktree inside `worktreesDir`.
+- The canonical branch should use an explicit shared name such as `ataski/canonical`.
+- Task branches should stay task-scoped (example: `task/T001-short-title`).
 
 ## Create Tasks
 
@@ -70,7 +89,7 @@ Never reuse task IDs.
 
 ## Allocate Task IDs
 
-Task IDs must follow `config.md`.
+Task IDs must follow `config.jsonc`.
 For default config, IDs are `T001`, `T002`, `T003`, ...
 
 Find the next ID by reading `ataski/tasks.md`, taking the highest existing ID, and incrementing it.
@@ -100,7 +119,17 @@ owner: unassigned
 created_at: 2026-02-21T00:00:00Z
 updated_at: 2026-02-21T00:00:00Z
 ---
-Task content.
+## Requirements
+
+- Describe the concrete behavior, acceptance criteria, and constraints.
+
+## Test Plan
+
+- Describe the intended RED path before implementation (tests, harness updates, or prerequisite test setup).
+
+## RED Evidence
+
+## GREEN Evidence
 ```
 
 Use `status` values from configured structure.
@@ -109,6 +138,8 @@ Default statuses:
 - `todo`
 - `in-progress`
 - `done`
+
+For source-code tasks, the task body MUST be specific enough to execute without guessing. A task file is not ready for implementation if `Requirements` or `Test Plan` is missing or vague.
 
 ## `blockedBy` Rules
 
@@ -168,18 +199,19 @@ Chore-only changes are not source-code changes unless they alter behavior, inclu
 For source-code changes, the agent MUST follow this ordered workflow and MUST NOT skip or reorder the gates:
 
 1. Create task in `ataski/todo/` (`status: todo`).
-2. Move task to `ataski/in-progress/` (`status: in-progress`).
-3. Record RED evidence in the task file, or (if TDD is not applicable) document a `TDD Exception` before source edits.
-4. Implement code changes.
-5. Record GREEN evidence in the task file.
-6. Move task to `ataski/done/` (`status: done`).
-7. Update `ataski/tasks.md` to reflect the final completed state and path.
+2. Write `Requirements` and `Test Plan` in the task file.
+3. Move task to `ataski/in-progress/` (`status: in-progress`).
+4. Record RED evidence in the task file, or (if TDD is truly not applicable) document a `TDD Exception` before source edits.
+5. Implement code changes.
+6. Record GREEN evidence in the task file.
+7. Move task to `ataski/done/` (`status: done`).
+8. Update `ataski/tasks.md` to reflect the final completed state and path.
 
-Apply the normal tracker/frontmatter updates when status changes (create/claim/complete). Step 7 is the required final tracker sync/check.
+Apply the normal tracker/frontmatter updates when status changes (create/claim/complete). Step 8 is the required final tracker sync/check.
 
 Pre-edit coordination rule (source-code changes):
 
-- Before editing any source file, the task MUST already exist and MUST already be in `ataski/in-progress/`.
+- Before editing any source file, the task MUST already exist, MUST already contain concrete `Requirements` and `Test Plan` sections, and MUST already be in `ataski/in-progress/`.
 
 No retroactive tracking (source-code changes):
 
@@ -202,6 +234,10 @@ TDD gate requirements for source-code changes:
 - If TDD is not applicable, add a `TDD Exception` section in the task file **before source edits**. This section MUST explain why TDD is not applicable and what validation will be used instead.
 - A `TDD Exception` replaces the RED requirement only. It does not waive GREEN validation.
 - GREEN evidence is always required before moving the task to `done`.
+- For new features, new packages, service rewrites, route rewiring, and other behavior-bearing work, automated tests are mandatory. Build, lint, typecheck, and manual smoke checks alone do NOT satisfy this requirement.
+- Missing test coverage, missing test harnesses, greenfield package setup, or scaffolding work are NOT valid reasons to skip TDD. The agent MUST first add or extend a test harness, or create a prerequisite task to do so, and then continue with RED/GREEN.
+- A full feature or public package MUST NOT use a blanket `TDD Exception` to avoid writing tests for its user-visible behavior.
+- If only part of a task cannot be tested first, the exception MUST be narrowly scoped to that part, and the agent MUST still write tests for the remaining behavior or split the work into smaller tasks.
 
 Do not mark task `done` without passing tests (or the documented exception validation) for source-level work.
 
@@ -210,6 +246,7 @@ Do not mark task `done` without passing tests (or the documented exception valid
 Before completing a source-code task, verify all items below:
 
 - task was created before source edits
+- task requirements and test plan were written before source edits
 - task was moved to `in-progress` before source edits
 - RED and GREEN evidence were recorded, or a pre-edit `TDD Exception` plus GREEN evidence was recorded
 - task was moved to `done` only after implementation and validation were complete
@@ -228,28 +265,30 @@ For source-code changes:
 
 Core rules:
 
-1. Use the main worktree as the canonical location for shared `ataski/` updates.
-2. Keep one task per worktree branch (example: `task/T001-short-title`).
-3. Keep one PR per task branch.
+1. Use one canonical worktree inside `worktreesDir` as the shared location for `ataski/` updates.
+2. The canonical worktree MUST use a dedicated canonical branch (example: `ataski/canonical`).
+3. Keep one task worktree per task branch under `worktreesDir` (example branch: `task/T001-short-title`).
+4. Keep one PR per task branch.
 
 Follow this sequence for each task:
 
-1. In main worktree, pick one `todo` task with all `blockedBy` tasks in `done`.
-2. Claim the task on the canonical board before coding:
+1. In the canonical worktree, pick one `todo` task with all `blockedBy` tasks in `done`.
+2. In the canonical worktree, claim the task on the shared board before coding:
    - move file to `ataski/in-progress/`
    - set `status: in-progress`
    - set `owner` when used
    - update `updated_at`
    - update matching line in `ataski/tasks.md`
-3. Create branch/worktree for only that task (`task/<ID>-<slug>`).
+3. From the canonical branch, create a new task branch/worktree for only that task under `worktreesDir` (`task/<ID>-<slug>`).
 4. Assign exactly one agent or sub-agent to that worktree/task.
 5. The assigned agent or sub-agent implements only the claimed task scope and opens one PR.
-6. After merge, in main worktree:
+6. When work is finished in a non-canonical worktree, suggest review by comparing the task branch against the canonical branch before merge.
+7. After merge, return to the canonical worktree:
    - move file to `ataski/done/`
    - set `status: done`
    - update `updated_at`
    - update `ataski/tasks.md`
-7. Re-evaluate blocked tasks and claim newly unblocked work.
+8. Re-evaluate blocked tasks and claim newly unblocked work.
 
 Coordination constraints:
 

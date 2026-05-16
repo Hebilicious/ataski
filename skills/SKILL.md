@@ -54,7 +54,7 @@ Default configuration:
 }
 ```
 
-The same default file contents are mirrored in `skills/references/config.jsonc`.
+The same default file contents are mirrored in `references/config.jsonc`.
 
 ## Structure
 
@@ -288,7 +288,7 @@ Before completing a source-code task, verify all items below:
 
 ## AGENTS.md Interaction
 
-Keep and use the `AGENTS.md` guidance (see `skills/references/AGENTS.md`) to mandate Ataski at the project level.
+Keep and use the `AGENTS.md` guidance (see `references/AGENTS.md`) to mandate Ataski at the project level.
 
 For source-code changes:
 
